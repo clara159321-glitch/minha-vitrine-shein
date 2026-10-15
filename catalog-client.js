@@ -17,8 +17,16 @@ async function request(path,{method='GET',body,rawBody,auth=false,headers={}}={}
 }
 async function localCatalog(){const r=await timedFetch('products.json',{cache:'no-store'});if(!r.ok)throw Error('Não foi possível carregar a vitrine.');const data=await r.json();if(!Array.isArray(data))throw Error('Catálogo inválido.');return data.map(validate)}
 async function catalog(){const c=await config();if(!c.supabaseUrl)return {initialized:false,products:await localCatalog(),configured:false};const state=await request('/rest/v1/rpc/get_vitrine_catalog',{method:'POST',body:{}});if(!state||typeof state.initialized!=='boolean'||!Array.isArray(state.products))throw Error('O serviço de publicação precisa de uma verificação.');return {...state,configured:true,products:state.initialized?state.products.map(validate):await localCatalog()}}
-async function sendCode(email){return request('/auth/v1/otp',{method:'POST',body:{email,create_user:false}})}
+async function sendCode(email){const redirect='https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html';return request('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,create_user:true}})}
 async function login(email,code){const data=await request('/auth/v1/verify',{method:'POST',body:{email,token:code,type:'email'}});session={token:data.access_token,expiresAt:Date.now()+data.expires_in*1000};try{const ok=await request('/rest/v1/rpc/is_vitrine_admin',{method:'POST',body:{},auth:true});if(ok!==true)throw Error('Esta conta não tem permissão para administrar a vitrine.')}catch(e){session=null;throw e}}
+async function resumeLogin(){
+ const fragment=new URLSearchParams(global.location.hash.slice(1));
+ if(!fragment.has('access_token')){if(fragment.has('error')){global.history.replaceState(null,'',global.location.pathname+global.location.search);throw Error('O link de acesso expirou. Solicite outro e-mail no painel.')}return false}
+ const token=fragment.get('access_token');global.history.replaceState(null,'',global.location.pathname+global.location.search);
+ if(!/^[A-Za-z0-9._-]{10,20000}$/.test(token))throw Error('Link de acesso inválido. Solicite outro e-mail.');
+ const seconds=Number(fragment.get('expires_in'));session={token,expiresAt:Date.now()+(Number.isFinite(seconds)&&seconds>0?Math.min(seconds,3600):3600)*1000};
+ try{await request('/auth/v1/user',{auth:true});const ok=await request('/rest/v1/rpc/is_vitrine_admin',{method:'POST',body:{},auth:true});if(ok!==true)throw Error('Este e-mail não está autorizado a administrar a vitrine.');return true}catch(e){session=null;throw e}
+}
 async function logout(){try{if(session)await request('/auth/v1/logout',{method:'POST',auth:true})}finally{session=null}}
 async function initialize(){return request('/rest/v1/rpc/initialize_vitrine',{method:'POST',body:{initial_products:await localCatalog()},auth:true})}
 async function uploadPhoto(data){
@@ -30,6 +38,6 @@ async function uploadPhoto(data){
 }
 async function save(product,version){validate(product);return request('/rest/v1/rpc/save_vitrine_product',{method:'POST',auth:true,body:{product,expected_version:version??null}})}
 async function remove(id,version){return request('/rest/v1/rpc/archive_vitrine_product',{method:'POST',auth:true,body:{product_id:id,expected_version:version}})}
-global.VitrineCatalog={config,catalog,sendCode,login,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
+global.VitrineCatalog={config,catalog,sendCode,login,resumeLogin,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
 })(typeof window!=='undefined'?window:globalThis);
 

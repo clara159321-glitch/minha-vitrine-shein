@@ -35,8 +35,11 @@ alter table vitrine_private.products enable row level security;
 alter table vitrine_private.history enable row level security;
 revoke all on all tables in schema vitrine_private from public,anon,authenticated;
 
+create table if not exists vitrine_private.owner_emails(email text primary key);
+alter table vitrine_private.owner_emails enable row level security;
+revoke all on vitrine_private.owner_emails from public,anon,authenticated;
 create or replace function public.is_vitrine_admin() returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from vitrine_private.admins where user_id=auth.uid());
+ select exists(select 1 from auth.users u where u.id=auth.uid() and u.email_confirmed_at is not null and (exists(select 1 from vitrine_private.admins a where a.user_id=u.id) or exists(select 1 from vitrine_private.owner_emails o where lower(o.email)=lower(u.email))));
 $$;
 create or replace function public.get_vitrine_catalog() returns jsonb language sql stable security definer set search_path='' as $$
  select jsonb_build_object('initialized',s.initialized,'products',

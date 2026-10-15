@@ -1,31 +1,26 @@
-# Ativação do serviço de publicação
+# Estado da ativação
 
-Este arquivo é para quem configura o serviço com as ferramentas conectadas. A proprietária não precisa editar código nem repetir esta configuração a cada produto.
+Projeto conectado: rwjelyrvhsecryqeqeik. Esquema vitrine_private e bucket vitrine-photos aplicados; três produtos migrados com histórico. site-config.json contém apenas URL e chave publishable pública.
 
-Estado atual: integração Supabase sugerida, mas conexão ainda não confirmada. site-config.json permanece sem URL/chave; operações de escrita são bloqueadas e o catálogo estático oficial contém três produtos.
+A proprietária foi cadastrada em vitrine_private.owner_emails com o e-mail informado na conversa, sem expor esse endereço neste repositório. is_vitrine_admin consulta auth.users pelo auth.uid(), exige e-mail confirmado e confere a lista privada ou o UUID autorizado em admins. Cadastro público não concede administração automaticamente.
 
-## Procedimento uma única vez
+## Único ajuste inicial de retorno
 
-1. Confirmar a conexão do Supabase, listar projetos autorizados e usar um projeto apropriado à vitrine. Não iniciar plano pago sem instrução da proprietária.
-2. Aplicar backend/supabase.sql como migração transacional. Ele cria catálogo privado, histórico, funções autorizadas e bucket público para fotos. Verificar que a migração executou por completo.
-3. Criar/confirmar a conta da proprietária no Supabase Auth com o e-mail que ela informou nesta conversa. Não incluir o e-mail em arquivos do repositório. Utilizar a API administrativa oficial de Auth ou o painel de usuários; não inserir diretamente em auth.users.
-4. Inserir o UUID dessa conta em vitrine_private.admins pela conexão administrativa. Exemplo com parâmetro real passado somente à ferramenta: INSERT INTO vitrine_private.admins(user_id) VALUES (<UUID verificado>) ON CONFLICT DO NOTHING. Não aceitar uma primeira reivindicação pública de propriedade.
-5. Configurar e-mail OTP no Auth: template de Magic Link deve mostrar o código {{ .Token }} claramente em português. Envio e verificação usam /auth/v1/otp com create_user:false e /auth/v1/verify com type:email. A conta precisa existir antes do primeiro login. Confirmar duração e tamanho do OTP compatíveis com o painel (6 a 10 dígitos). Habilitar envio de e-mails para a proprietária; verificar restrições do remetente padrão. Se exigir remetente/SMTP próprio, orientar a conexão desse serviço sem publicar suas credenciais.
-6. Configurar o Site URL do Auth para o endereço público da vitrine. Nenhuma senha administrativa ou segredo deve ser enviado ao navegador. A chave publishable/anon é uma identificação pública; o bloqueio de gravações está no servidor, não nessa chave.
-7. Atualizar somente supabaseUrl e publishableKey em site-config.json usando os valores retornados pelo projeto autorizado. Recusar sb_secret_ e service_role. Não mover credenciais administrativas para arquivos ou argumentos de comandos.
-8. Verificar com API real: visitante consegue ler get_vitrine_catalog e imagens, mas não inicializar, gravar nem arquivar; conta não autorizada também não pode gravar; somente o UUID autorizado pode operar. Verificar explicitamente as permissões das funções e as políticas de Storage.
-9. Abrir o painel e solicitar à proprietária que receba/digite seu próprio código. Não pedir que ela cole código ou senha na conversa. Na primeira entrada, o botão ATIVAR MEU CATÁLOGO chama uma transação que copia os três produtos oficiais e marca a inicialização. Repetir a ativação é seguro e não duplica entradas. Validar os três IDs e hashes das imagens após a importação.
-10. Com a sessão da proprietária, testar criar/editar/arquivar um item claramente identificado para teste, confirmar leitura pública após cada operação, preservar o histórico e remover o item de teste. Confirmar compressão e upload da foto no Android, além de conflito em duas abas e saída da sessão.
-11. Conferir a publicação do GitHub Pages do commit com a configuração final. Não desabilitar Pages nem recriar o site.
+A ferramenta Supabase disponível não oferece alteração da configuração de Auth. No Dashboard, Authentication → URL Configuration → Site URL precisa ser definido como https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html . Não pedir senha, token ou chave secreta à proprietária.
 
-## Recuperação
+A entrada usa Magic Link padrão, com create_user:true para permitir o primeiro acesso por confirmação de e-mail. O login confirma a sessão em /auth/v1/user e a autorização em is_vitrine_admin. Fragmentos de autenticação são removidos do endereço antes de carregar o catálogo. Não há senha nem persistência de token em disco. A documentação antiga que exigia alterar template OTP não se aplica ao fluxo atual.
 
-- Antes da ativação: produtos originais em recovery/catalogos-originais/ e commit indicado no relatório.
-- Depois: vitrine_private.products guarda registros arquivados e vitrine_private.history guarda snapshots com autor e data. Nenhum usuário anônimo ou autenticado comum lê esse histórico.
-- Uma recuperação deve verificar a versão atual antes de restaurar um snapshot, preservar a versão existente e incrementar version. Não apagar histórico nem imagens.
-- Não recriar o catálogo estático quando o serviço retornar uma lista vazia: isso é um resultado válido após excluir todas as roupas.
+Após a proprietária concluir o primeiro login, validar cadastro real com upload, leitura pública, edição e exclusão de um item claramente de teste. O SQL de autorização e a migração foram exercitados no banco real; os testes completos de interface ainda usam serviço simulado. Não afirmar que login/envio real funcionam sem verificar essa etapa.
 
-## Limites de verificação até a conexão
+## Verificações já realizadas
 
-A suíte usa serviço simulado e não executa o SQL real. A migração, o login por e-mail, as permissões e o Storage só podem ser certificados depois da aplicação no projeto conectado. No ambiente desta conversa, Chromium foi bloqueado e os destinos externos SHEIN não foram acessíveis pela ferramenta de navegação.
+- Catálogo ativo inicializado com três registros.
+- Hash e tamanho das imagens migradas preservados.
+- Bucket público com limite de 3 MB e formatos JPEG, PNG e WebP.
+- Anônimos não executam gravações; autenticados sem autorização são rejeitados.
+- Papel autenticado não lê tabela de autorização privada.
+- Sete testes de aplicação simulados passam.
 
+O Advisor sinaliza funções SECURITY DEFINER intencionalmente expostas como RPCs: leitura pública deliberada e gravações com verificação explícita de proprietária. Tabelas privadas têm RLS sem políticas, sem concessões diretas a clientes, por isso geram informações de acesso negado por padrão. Não conceder acesso amplo para silenciar esses avisos. A função rls_auto_enable é preexistente ao projeto da vitrine e não foi alterada.
+
+Recuperação: catálogos originais no diretório recovery/ e snapshots em vitrine_private.history. Exclusão é arquivamento; imagens não são apagadas nem sobrescritas pelo painel.

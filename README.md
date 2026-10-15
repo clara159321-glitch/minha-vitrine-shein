@@ -6,20 +6,24 @@ Painel: https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html
 ## Como cadastrar a próxima roupa
 
 Após a conexão inicial:
-1. Abra o painel e entre com o código enviado ao seu e-mail autorizado.
+1. Abra o painel e entre pelo link enviado ao seu e-mail autorizado.
 2. Toque em “Escolher foto da galeria”.
 3. Preencha nome, preço, link de afiliada da SHEIN e categoria.
 4. Toque em PUBLICAR PRODUTO e aguarde a mensagem “Publicado!”.
 
 O produto aparece na vitrine sem baixar arquivos e sem entrar no GitHub. Para mudar uma roupa, toque em Editar; para removê-la, toque em Excluir e confirme.
 
-## Uma única configuração inicial ainda necessária
+## Conexão do Supabase
 
-O Supabase precisa ser conectado nesta conversa e configurado para a proprietária. Depois da conexão, a preparação técnica será feita com o esquema em backend/supabase.sql. Abra o painel e siga “Vamos conectar sua publicação”. Quando a conexão estiver pronta, entre com seu e-mail e o código recebido e toque em ATIVAR MEU CATÁLOGO uma única vez. Essa ativação transfere as três roupas preservando fotos e links.
+O projeto Supabase foi conectado. Banco, histórico privado, armazenamento de fotos e permissões foram aplicados. As três roupas foram copiadas para o catálogo ativo, preservando fotos e links. A configuração pública do site contém somente a URL e uma chave publishable, nunca service_role ou senha.
 
-O arquivo site-config.json está intencionalmente sem conexão enquanto não houver projeto autorizado. Por isso, a vitrine já apresenta os três produtos pelo catálogo oficial, mas o painel ainda não pode gravar publicações reais. Não há botão que finja salvar localmente nem exportação para baixar.
+O acesso da proprietária é autorizado por uma lista privada no banco, comparada com o e-mail confirmado de auth.users; nenhuma decisão usa user_metadata. A conta pode ser criada pelo fluxo de confirmação de e-mail, mas somente o e-mail previamente autorizado recebe administração.
 
-Somente URL do projeto e chave pública publishable/anon ficam na configuração. Não coloque service_role, chave secreta, senha ou token de GitHub nesse arquivo. O código de acesso é temporário; a sessão fica em memória e exige novo login após recarregar a página.
+Pendente para o primeiro acesso: no Supabase Authentication → URL Configuration, definir Site URL como https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html . Depois, abrir o painel, informar o e-mail autorizado e tocar em RECEBER LINK DE ACESSO. No e-mail, tocar em Confirm your email ou Log in para retornar ao painel. Não há necessidade de alterar templates HTML para essa entrada. A personalização de configurações de Auth não está disponível nas ferramentas conectadas desta sessão.
+
+O painel valida a sessão e a autorização no servidor, remove os dados de acesso do endereço e mantém a sessão somente em memória. Não solicita outra senha nem grava tokens no armazenamento do navegador. Nenhuma senha ou chave secreta deve ser enviada na conversa.
+
+A configuração de retorno por e-mail e o primeiro login real precisam ser confirmados pela proprietária. Não foi certificado o botão PUBLICAR PRODUTO com uma sessão real do navegador nesta execução.
 
 ## Migração segura dos catálogos
 
@@ -30,7 +34,7 @@ products.json é o único catálogo estático oficial. Ele agora reúne três ro
 
 products .json tinha duas cópias exatamente iguais do conjunto, com IDs diferentes. A duplicata idêntica foi consolidada usando o ID presente em products (3).json. Nenhuma fonte original foi apagada; os arquivos antigos continuam preservados e há cópias exatas em recovery/catalogos-originais/. Consulte recovery/migration-report.json para os hashes e a decisão de migração.
 
-Depois de ativado, o catálogo do serviço passa a ser a fonte compartilhada da vitrine; a versão estática fica como recuperação inicial. Uma lista vazia no serviço permanece vazia, sem ressuscitar produtos excluídos. Erros no serviço geram aviso, sem recorrer silenciosamente a um catálogo antigo.
+O catálogo do serviço agora é a fonte compartilhada da vitrine; a versão estática fica como recuperação inicial. Uma lista vazia no serviço permanece vazia, sem ressuscitar produtos excluídos. Erros no serviço geram aviso, sem recorrer silenciosamente a um catálogo antigo.
 
 ## Recuperação e segurança
 
