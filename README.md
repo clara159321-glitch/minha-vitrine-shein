@@ -1,3 +1,5 @@
+> Atualização de acesso: a entrada principal agora é por e-mail e senha, usando o Supabase Auth e a mesma autorização de proprietária. O link de e-mail é opcional e mantém sua cota. O teste real de senha no celular ainda precisa ser confirmado pela proprietária; veja backend/LOGIN-LIMITS.md. Nenhuma senha foi lida ou alterada.
+
 # Minha Vitrine — painel simples no celular
 
 Vitrine: https://clara159321-glitch.github.io/minha-vitrine-shein/
@@ -6,7 +8,7 @@ Painel: https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html
 ## Como cadastrar a próxima roupa
 
 Após a conexão inicial:
-1. Abra o painel e entre pelo link enviado ao seu e-mail autorizado.
+1. Abra o painel e entre com seu e-mail e a senha do acesso à vitrine. Não envie sua senha nesta conversa.
 2. Toque em “Escolher foto da galeria”.
 3. Preencha nome, preço, link de afiliada da SHEIN e categoria.
 4. Toque em PUBLICAR PRODUTO e aguarde a mensagem “Publicado!”.

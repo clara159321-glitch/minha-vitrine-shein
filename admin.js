@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),api=window.VitrineCatalog;
 let products=[],editing=null,pendingId=null,photoData='',photoBusy=false,photoTask=0,busy=false,loggedIn=false,initialized=false;
 function message(text,error=false){$('message').textContent=text;$('message').dataset.error=String(error)}
-function lock(value){busy=value;document.querySelectorAll('button,input,select').forEach(b=>b.disabled=value);$('publish').disabled=value||photoBusy;updateEmailWait()}
+function lock(value){busy=value;document.querySelectorAll('button,input,select').forEach(b=>b.disabled=value);$('publish').disabled=value||photoBusy;updateEmailWait();updatePasswordWait()}
 let emailWasWaiting=false,emailWaitFinished=false;
 function updateEmailWait(){
  const state=api.emailWaitState(),button=$('send-link'),notice=$('email-wait');notice.hidden=!state;
@@ -15,8 +15,19 @@ function updateEmailWait(){
  const why=state.kind==='email'?'O limite de e-mails do serviço foi atingido. ':state.kind==='sent'?'Seu pedido foi enviado. Confira a caixa de entrada e o spam. ':state.kind==='network'?'A conexão caiu e não sabemos se o e-mail foi enviado. Confira a caixa de entrada antes de tentar de novo. ': 'Muitos pedidos em pouco tempo. ';
  notice.textContent=why+'Nova tentativa '+(state.estimated?'sugerida':'permitida pelo prazo informado')+' às '+until+' (horário deste celular). '+(state.estimated?'Estimativa: o serviço não informou a hora exata de liberação; uma nova tentativa ainda pode ser limitada.':'Prazo informado pelo serviço; a tentativa ainda passará pelas proteções normais.')+' Não é preciso atualizar a página. Use somente o e-mail mais recente e não reutilize um link já aberto.';
 }
-function tickEmailWait(){updateEmailWait();const timer=setTimeout(tickEmailWait,1000);timer?.unref?.()}
+function tickEmailWait(){updateEmailWait();updatePasswordWait();const timer=setTimeout(tickEmailWait,1000);timer?.unref?.()}
 window.addEventListener('storage',updateEmailWait);
+let passwordWaitUntil=0;
+function updatePasswordWait(){
+ const seconds=Math.max(0,Math.ceil((passwordWaitUntil-Date.now())/1000));$('password-submit').disabled=busy||seconds>0;$('password-wait').hidden=seconds===0;
+ $('password-submit').textContent=seconds?'AGUARDE '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0'):'ENTRAR COM SENHA';
+ $('password-wait').textContent=seconds?'O Supabase limitou as tentativas de senha. Aguarde a contagem. Se o servidor não informou um prazo, a espera é estimada e a próxima tentativa será reavaliada.':'';
+}
+$('password-login').onsubmit=async e=>{
+ e.preventDefault();if(busy)return;if(passwordWaitUntil>Date.now()){updatePasswordWait();return}
+ const password=$('access-password').value;$('access-password').value='';lock(true);message('Verificando seu acesso com segurança…');
+ try{await api.passwordLogin($('email').value.trim(),password);loggedIn=true;await load();openEditor();message('Você entrou! Agora pode publicar suas roupas.')}catch(e){loggedIn=false;if(e.waitSeconds)passwordWaitUntil=Date.now()+e.waitSeconds*1000;$('login-box').hidden=false;render();message(e.message,true)}finally{lock(false)}
+};
 function money(value){return value===null?'Preço a confirmar':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value)}
 function isActive(){return loggedIn&&initialized}
 function render(){
@@ -34,7 +45,7 @@ async function load(){const state=await api.catalog();products=state.products;in
 function openEditor(id=null){photoTask++;photoBusy=false;editing=products.find(p=>p.id===id)||null;pendingId=editing?.id||crypto.randomUUID();photoData=editing?.imageUrl||'';$('name').value=editing?.name||'';$('price').value=editing?.price===null||editing?.price===undefined?'':String(editing.price).replace('.',',');$('affiliateUrl').value=editing?.affiliateUrl||'';$('category').value=editing?.category||'Moda';$('photo').value='';$('preview').hidden=!photoData;if(photoData)$('preview').src=photoData;$('form-title').textContent=editing?'Editar roupa':'Adicionar uma roupa';$('publish').textContent=editing?'SALVAR ALTERAÇÕES':'PUBLICAR PRODUTO';$('cancel').hidden=!editing;$('edit-note').textContent=editing?'A alteração aparece na vitrine após a confirmação.':'O produto aparece na vitrine após a confirmação da publicação.';if(isActive())$('editor-box').scrollIntoView({block:'start'})}
 async function photo(file){if(!file)return;if(!file.type.startsWith('image/'))throw Error('Escolha uma foto da galeria.');if(file.size>25*1024*1024)throw Error('Esta foto é muito grande. Escolha uma imagem menor.');const blobUrl=URL.createObjectURL(file);try{const image=new Image();image.src=blobUrl;await image.decode();if(!image.naturalWidth||!image.naturalHeight)throw Error();const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);const data=canvas.toDataURL('image/jpeg',0.82);if(data.length>2800000)throw Error('Foto muito grande. Escolha uma imagem menor.');return data}finally{URL.revokeObjectURL(blobUrl)}}
 $('photo').onchange=async()=>{const task=++photoTask;photoBusy=true;$('publish').disabled=true;try{const next=await photo($('photo').files[0]);if(next&&task===photoTask){photoData=next;$('preview').src=photoData;$('preview').hidden=false;message('Foto pronta. Preencha os dados e publique.')}}catch(e){if(task===photoTask){$('photo').value='';message(e.message||'Não conseguimos abrir a foto. Tente uma imagem JPG ou PNG.',true)}}finally{if(task===photoTask){photoBusy=false;$('publish').disabled=busy}}};
-$('login').onsubmit=async e=>{e.preventDefault();if(busy)return;if(api.emailWaitState()){updateEmailWait();message('Aguarde a contagem abaixo antes de pedir outro e-mail.',true);return}lock(true);message('Enviando seu acesso por e-mail…');try{await api.sendCode($('email').value.trim());$('mail-help').hidden=false;message('Se o e-mail estiver autorizado, você receberá um link de acesso. Abra sua caixa de entrada e toque no link.')}catch(e){message(e.message,true)}finally{lock(false)}};
+$('login').onsubmit=async e=>{e.preventDefault();if(busy)return;if(!$('email').reportValidity())return;if(api.emailWaitState()){updateEmailWait();message('Aguarde a contagem abaixo antes de pedir outro e-mail.',true);return}lock(true);message('Enviando seu acesso por e-mail…');try{await api.sendCode($('email').value.trim());$('mail-help').hidden=false;message('Se o e-mail estiver autorizado, você receberá um link de acesso. Abra sua caixa de entrada e toque no link.')}catch(e){message(e.message,true)}finally{lock(false)}};
 $('activate').onclick=async()=>{if(!confirm('Ativar sua seleção atual para publicar diretamente pelo painel?'))return;lock(true);message('Ativando suas roupas, fotos e links…');try{await api.initialize();await load();openEditor();message('Catálogo ativado! Suas roupas já estão na vitrine.')}catch(e){message(e.message,true)}finally{lock(false)}};
 function sameProduct(a,b){return ['id','name','price','category','imageUrl','affiliateUrl'].every(key=>a[key]===b[key])}
 $('product-form').onsubmit=async e=>{e.preventDefault();if(!isActive()||busy||photoBusy)return;let product;try{const value=$('price').value.trim().replace(/^R\$\s*/i,'');if(!/^(\d+|\d{1,3}(\.\d{3})+)(,\d{1,2})?$/.test(value))throw Error('Digite o preço assim: 108,68.');product={...(editing||{}),id:editing?.id||pendingId||crypto.randomUUID(),name:$('name').value.trim(),price:Number(value.replace(/\./g,'').replace(',','.')),imageUrl:photoData,affiliateUrl:$('affiliateUrl').value.trim(),category:$('category').value};delete product._version;pendingId=product.id;if(!editing&&(!product.imageUrl||!product.affiliateUrl))throw Error('Escolha a foto e cole o link de afiliada antes de publicar.');api.validate(product)}catch(e){message(e.message,true);return}
@@ -47,7 +58,7 @@ $('new').onclick=()=>{openEditor();message('Escolha a foto da próxima roupa.')}
 $('refresh').onclick=async()=>{lock(true);try{await load();message('Lista atualizada.')}catch(e){message(e.message,true)}finally{lock(false)}};
 $('logout').onclick=async()=>{lock(true);try{await api.logout()}catch{}finally{loggedIn=false;editing=null;photoData='';$('product-form').reset();$('preview').removeAttribute('src');$('preview').hidden=true;$('login-box').hidden=false;render();lock(false);message('Você saiu do painel. Suas roupas continuam publicadas.')}};
 $('check-connection').onclick=()=>location.reload();
-(async()=>{try{loggedIn=await api.resumeLogin();const state=await load();if(loggedIn)openEditor();message(loggedIn?'Pronto! Você já pode publicar suas roupas.':state.configured?'Entre com seu e-mail para administrar suas roupas.':'Suas roupas estão preservadas. Falta apenas conectar a publicação uma vez.')}catch(e){loggedIn=false;try{await load()}catch{}message(e.message,true)}})();
+(async()=>{try{loggedIn=await api.resumeLogin();const state=await load();if(loggedIn)openEditor();message(loggedIn?'Pronto! Você já pode publicar suas roupas.':state.configured?'Entre com seu e-mail e a senha do acesso à vitrine.':'Suas roupas estão preservadas. Falta apenas conectar a publicação uma vez.')}catch(e){loggedIn=false;try{await load()}catch{}message(e.message,true)}})();
 
 
 tickEmailWait();

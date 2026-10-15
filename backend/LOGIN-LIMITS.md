@@ -31,3 +31,11 @@ Doze testes locais passaram, incluindo as sete verificações anteriores de cat�
 
 Nenhum e-mail real foi disparado para testes, para preservar a quota. Não foi possível completar uma nova autenticação na caixa de entrada da proprietária. Os registros já mostram que uma autenticação real anterior funcionou, mas isso não certifica a nova tentativa após o limite. A configuração completa de SMTP e a retomada do login precisam de verificação posterior.
 
+
+## Entrada por senha disponível
+
+Os registros mais recentes continuaram retornando over_email_send_rate_limit; encerrar o contador local não libera a quota do servidor. A consulta de Auth verificou apenas que a conta está confirmada e possui encrypted_password não vazio, sem ler seu valor. Isso não prova que a proprietária conhece uma senha utilizável: contas passwordless podem ter credenciais internas. Nunca pedir senha na conversa, tentar adivinhar nem substituir a senha administrativamente sem um processo seguro.
+
+O painel agora oferece o fluxo padrão do Supabase Auth POST /auth/v1/token?grant_type=password e confere is_vitrine_admin antes de liberar edição. A senha é digitada somente no painel HTTPS, enviada ao Supabase e removida do campo; não é persistida no armazenamento do site. A quota de envio de e-mails não se aplica a esse pedido. As proteções de tentativa de senha permanecem ativas, com espera separada quando houver HTTP 429. O link por e-mail continua como alternativa, sujeito à quota original.
+
+Quinze testes simulados passaram, incluindo login por senha, rejeição de conta não autorizada, limpeza do campo, senha inválida e ausência de envio de e-mail. Nenhum login real com senha foi feito nesta execução. A proprietária precisa confirmar se conhece a senha e fazer um único teste no celular; se não conhecer, orientar a recuperação com segurança sem criar mecanismo alternativo de redefinição de senha.

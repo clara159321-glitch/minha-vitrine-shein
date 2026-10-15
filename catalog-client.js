@@ -25,7 +25,7 @@ async function request(path,{method='GET',body,rawBody,auth=false,headers={}}={}
  if(auth&&(!session||session.expiresAt<=Date.now())){session=null;throw Error('Sua sessão terminou. Entre novamente.')}
  let r;try{r=await timedFetch(c.supabaseUrl.replace(/\/$/,'')+path,{method,headers:{apikey:c.publishableKey,...(session?{Authorization:'Bearer '+session.token}:{}),...(body!==undefined?{'Content-Type':'application/json'}:{}),...headers},body:rawBody!==undefined?rawBody:body===undefined?undefined:JSON.stringify(body),cache:'no-store'})}catch{throw Error('Sem conexão. Confira a internet e tente novamente; o resultado ainda não foi confirmado.')}
  const text=await r.text();let data;try{data=text?JSON.parse(text):null}catch{if(r.status!==429)throw Error('O serviço respondeu de forma inesperada.');data=null}
- if(!r.ok){if(r.status===429)throw rateError(r,data);if(r.status===401||r.status===403)throw Error('Acesso não autorizado. Entre com a conta da proprietária.');if(data?.error_code==='otp_expired'||data?.error_code==='invalid_credentials')throw Error('Código inválido ou vencido. Peça outro código e tente novamente.');if(r.status===409||data?.code==='40001')throw Error('Este produto foi alterado em outra tela. Atualize a lista antes de tentar novamente.');throw Error('Não foi possível concluir a operação. Tente novamente.')}
+ if(!r.ok){if(r.status===429)throw rateError(r,data);if((data?.code||data?.error_code)==='invalid_credentials'&&path.startsWith('/auth/v1/token'))throw Error('E-mail ou senha não conferem. Use a senha do acesso à vitrine; ela pode ser diferente da senha da conta do Supabase.');if(r.status===401||r.status===403)throw Error('Acesso não autorizado. Entre com a conta da proprietária.');if(data?.error_code==='otp_expired'||data?.error_code==='invalid_credentials')throw Error('Código inválido ou vencido. Peça outro código e tente novamente.');if(r.status===409||data?.code==='40001')throw Error('Este produto foi alterado em outra tela. Atualize a lista antes de tentar novamente.');throw Error('Não foi possível concluir a operação. Tente novamente.')}
  return data
 }
 async function localCatalog(){const r=await timedFetch('products.json',{cache:'no-store'});if(!r.ok)throw Error('Não foi possível carregar a vitrine.');const data=await r.json();if(!Array.isArray(data))throw Error('Catálogo inválido.');return data.map(validate)}
@@ -40,6 +40,13 @@ async function sendCode(email){
 }
 
 async function login(email,code){const data=await request('/auth/v1/verify',{method:'POST',body:{email,token:code,type:'email'}});session={token:data.access_token,expiresAt:Date.now()+data.expires_in*1000};try{const ok=await request('/rest/v1/rpc/is_vitrine_admin',{method:'POST',body:{},auth:true});if(ok!==true)throw Error('Esta conta não tem permissão para administrar a vitrine.')}catch(e){session=null;throw e}}
+async function passwordLogin(email,password){
+ session=null;
+ const data=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});
+ if(typeof data?.access_token!=='string'||!Number.isFinite(data.expires_in)||data.expires_in<=0)throw Error('O serviço não confirmou seu acesso.');
+ session={token:data.access_token,expiresAt:Date.now()+Math.min(data.expires_in,3600)*1000};
+ try{const ok=await request('/rest/v1/rpc/is_vitrine_admin',{method:'POST',body:{},auth:true});if(ok!==true)throw Error('Esta conta não está autorizada a administrar a vitrine.')}catch(e){session=null;throw e}
+}
 async function resumeLogin(){
  const fragment=new URLSearchParams(global.location.hash.slice(1));
  if(!fragment.has('access_token')){if(fragment.has('error')){global.history.replaceState(null,'',global.location.pathname+global.location.search);throw Error('O link de acesso expirou. Solicite outro e-mail no painel.')}return false}
@@ -59,6 +66,6 @@ async function uploadPhoto(data){
 }
 async function save(product,version){validate(product);return request('/rest/v1/rpc/save_vitrine_product',{method:'POST',auth:true,body:{product,expected_version:version??null}})}
 async function remove(id,version){return request('/rest/v1/rpc/archive_vitrine_product',{method:'POST',auth:true,body:{product_id:id,expected_version:version}})}
-global.VitrineCatalog={config,catalog,emailWaitState,sendCode,login,resumeLogin,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
+global.VitrineCatalog={config,catalog,emailWaitState,sendCode,login,passwordLogin,resumeLogin,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
 })(typeof window!=='undefined'?window:globalThis);
 
