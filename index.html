@@ -25,15 +25,16 @@
 <div class="tools"><div class="tabs" aria-label="Filtrar categoria"></div><input class="search" type="search" id="search" aria-label="Buscar achadinhos" placeholder="Buscar na vitrine…"></div>
 <div class="catalog-meta"><span id="result-count" role="status" aria-live="polite"></span><label>Ordenar: <select id="sort" aria-label="Ordenar produtos"><option value="featured">Destaques</option><option value="az">Nome: A a Z</option><option value="za">Nome: Z a A</option></select></label></div><div class="grid" id="products"></div>
 </section>
-<section class="info" id="sobre"><div><span class="eyebrow">Uma seleção, muitas ideias</span><h2>Achados que combinam<br>com você.</h2></div><div><p>Minha Vitrine é um espaço independente para reunir inspirações e compartilhar achadinhos da SHEIN. Salve os seus favoritos e encontre tudo de novo quando quiser.</p><p style="margin-top:14px"><strong>Estamos preparando a nossa seleção.</strong> As imagens e os itens desta primeira versão são demonstrativos e não representam ofertas ou produtos confirmados da SHEIN. Os links de afiliada serão adicionados em breve.</p></div></section>
+<section class="info" id="sobre"><div><span class="eyebrow">Uma seleção, muitas ideias</span><h2>Achados que combinam<br>com você.</h2></div><div><p>Minha Vitrine é um espaço independente para reunir inspirações e compartilhar achadinhos da SHEIN. Salve os seus favoritos e encontre tudo de novo quando quiser.</p><p style="margin-top:14px"><strong>A nossa seleção já começou.</strong> O vestido bege de um ombro só tem imagem e link de afiliada enviados para a vitrine. Os demais itens estão marcados como demonstrativos. Confira preço, tamanhos, disponibilidade e condições diretamente na SHEIN.</p></div></section>
 </main>
-<footer><div class="footer-top"><a class="brand" href="#">minha vitrine<i>˙</i></a><a href="#achadinhos" style="font-size:12px">Voltar aos achadinhos ↑</a></div><p><strong>Transparência:</strong> esta é uma vitrine independente, sem vínculo oficial com a SHEIN. Quando houver links de afiliada, podemos receber uma comissão pelas compras realizadas por eles. Preços, disponibilidade, entrega e condições devem ser conferidos diretamente na loja.</p><div class="footer-bottom"><span>© <span id="year"></span> Minha Vitrine</span><span>Feito para descobrir, salvar e se inspirar.</span></div></footer>
+<footer><div class="footer-top"><a class="brand" href="#">minha vitrine<i>˙</i></a><a href="#achadinhos" style="font-size:12px">Voltar aos achadinhos ↑</a></div><p><strong>Transparência:</strong> esta é uma vitrine independente, sem vínculo oficial com a SHEIN. Esta página contém links de afiliada e podemos receber uma comissão pelas compras realizadas por eles. Preços, disponibilidade, entrega e condições devem ser conferidos diretamente na loja.</p><div class="footer-bottom"><span>© <span id="year"></span> Minha Vitrine</span><span>Feito para descobrir, salvar e se inspirar.</span></div></footer>
 </div>
 <dialog id="demo-dialog" aria-labelledby="dialog-title"><h2 id="dialog-title">Um gostinho do que vem aí</h2><p>Este item é uma inspiração demonstrativa. Ainda não há um produto ou link de afiliada cadastrado para ele.</p><p>Salve nos favoritos e explore outras ideias enquanto preparamos a seleção.</p><form method="dialog"><button>Continuar explorando</button></form></dialog>
 <script>
 /* Configure aqui os produtos reais. Use affiliateUrl apenas para seu link de afiliada verificado.
    Ao trocar os exemplos, atualize também os avisos de demonstração da página. */
 const products = [
+{id:'vestido-ombro-unico',name:'Vestido midi de um ombro só — bege',category:'Moda',imageUrl:'assets/vestido-ombro-unico.jpg',alt:'Imagem enviada: vestido bege de um ombro só, com detalhe dourado e drapeado',affiliateUrl:'https://onelink.shein.com/56/653ozl34vluc?ismg_ol=0L6R0RYY1nY_01_KOC-C'},
 {id:'camisa',name:'Camisa leve em tom natural',category:'Moda',image:'photo-1598554747436-c9293d6a588f',alt:'Camisa clara em composição de moda',affiliateUrl:null},
 {id:'bolsa',name:'Bolsa para acompanhar o dia',category:'Acessórios',image:'photo-1553062407-98eeb64c6a62',alt:'Bolsa em uma composição de acessórios',affiliateUrl:null},
 {id:'vestido',name:'Vestido para dias de sol',category:'Moda',image:'photo-1515372039744-b8f02a3ae446',alt:'Inspiração de look com vestido',affiliateUrl:null},
@@ -51,14 +52,14 @@ function render(){
  tabs.replaceChildren();['Todos','Moda','Acessórios','Casa','Beleza'].forEach(c=>{const b=document.createElement('button');b.textContent=c;b.setAttribute('aria-pressed',String(category===c));b.onclick=()=>{category=c;render()};tabs.append(b)});
  let list=products.filter(p=>(category==='Todos'||p.category===category)&&(!onlyFavorites||saved.includes(p.id))&&normalize(p.name+' '+p.category).includes(normalize(document.querySelector('#search').value.trim())));
  const sort=document.querySelector('#sort').value;if(sort!=='featured')list.sort((a,b)=>(sort==='az'?1:-1)*a.name.localeCompare(b.name,'pt-BR'));
- document.querySelector('#result-count').textContent=list.length+' inspiraç'+(list.length===1?'ão':'ões')+(onlyFavorites?' nos favoritos':' na vitrine')+' · demonstração';
+ document.querySelector('#result-count').textContent=list.length+' ite'+(list.length===1?'m':'ns')+(onlyFavorites?' nos favoritos':' na vitrine')+' · '+list.filter(p=>p.affiliateUrl).length+' com link de afiliada';
  document.querySelector('#favorite-count').textContent='('+saved.length+')';
  document.querySelector('#favorites').setAttribute('aria-pressed',String(onlyFavorites));
  grid.replaceChildren();
  list.forEach(p=>{
  const card=document.createElement('article');card.className='card';
  const picture=document.createElement('div');picture.className='card-image';
- const img=document.createElement('img');img.src='https://images.unsplash.com/'+p.image+'?auto=format&fit=crop&w=650&q=80';img.alt=p.alt;img.loading='lazy';img.width=600;img.height=800;
+ const img=document.createElement('img');img.src=p.imageUrl||('https://images.unsplash.com/'+p.image+'?auto=format&fit=crop&w=650&q=80');img.alt=p.alt;img.loading='lazy';img.width=600;img.height=800;if(p.imageUrl){img.style.objectFit='contain';picture.style.background='#1a1a1a'}
  img.onerror=()=>{img.style.display='none';picture.style.background='linear-gradient(135deg,#ded9ce,#eeebe3)'};
  const heart=document.createElement('button');heart.className='heart';const active=saved.includes(p.id);heart.textContent=active?'♥':'♡';heart.setAttribute('aria-label',(active?'Remover dos':'Adicionar aos')+' favoritos: '+p.name);heart.setAttribute('aria-pressed',String(active));
  heart.onclick=()=>{saved=active?saved.filter(id=>id!==p.id):[...saved,p.id];try{localStorage.setItem('vitrine-favorites',JSON.stringify(saved))}catch{}render();const replacement=[...grid.querySelectorAll('.heart')].find(b=>b.getAttribute('aria-label').endsWith(p.name));if(replacement)replacement.focus();else document.querySelector('#favorites').focus()};
