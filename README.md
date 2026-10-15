@@ -1,3 +1,5 @@
+> A opção recomendada agora é ENTRAR COM GITHUB: gratuita, sem SMTP ou domínio próprio para o login. O botão está preparado, mas ainda é necessário registrar e autorizar o aplicativo GitHub no Supabase uma única vez. Não foi certificado o login real. Veja backend/GITHUB-LOGIN.md. As alternativas anteriores não são obrigatórias.
+
 > Atualização de acesso: a entrada principal agora é por e-mail e senha, usando o Supabase Auth e a mesma autorização de proprietária. O link de e-mail é opcional e mantém sua cota. O teste real de senha no celular ainda precisa ser confirmado pela proprietária; veja backend/LOGIN-LIMITS.md. Nenhuma senha foi lida ou alterada.
 
 # Minha Vitrine — painel simples no celular

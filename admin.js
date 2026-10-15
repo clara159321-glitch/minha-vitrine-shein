@@ -23,6 +23,7 @@ function updatePasswordWait(){
  $('password-submit').textContent=seconds?'AGUARDE '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0'):'ENTRAR COM SENHA';
  $('password-wait').textContent=seconds?'O Supabase limitou as tentativas de senha. Aguarde a contagem. Se o servidor não informou um prazo, a espera é estimada e a próxima tentativa será reavaliada.':'';
 }
+$('github-login').onclick=async()=>{if(busy)return;lock(true);message('Verificando a conexão com o GitHub…');try{await api.githubLogin()}catch(e){message(e.message,true);lock(false)}};
 $('password-login').onsubmit=async e=>{
  e.preventDefault();if(busy)return;if(passwordWaitUntil>Date.now()){updatePasswordWait();return}
  const password=$('access-password').value;$('access-password').value='';lock(true);message('Verificando seu acesso com segurança…');
@@ -58,7 +59,9 @@ $('new').onclick=()=>{openEditor();message('Escolha a foto da próxima roupa.')}
 $('refresh').onclick=async()=>{lock(true);try{await load();message('Lista atualizada.')}catch(e){message(e.message,true)}finally{lock(false)}};
 $('logout').onclick=async()=>{lock(true);try{await api.logout()}catch{}finally{loggedIn=false;editing=null;photoData='';$('product-form').reset();$('preview').removeAttribute('src');$('preview').hidden=true;$('login-box').hidden=false;render();lock(false);message('Você saiu do painel. Suas roupas continuam publicadas.')}};
 $('check-connection').onclick=()=>location.reload();
-(async()=>{try{loggedIn=await api.resumeLogin();const state=await load();if(loggedIn)openEditor();message(loggedIn?'Pronto! Você já pode publicar suas roupas.':state.configured?'Entre com seu e-mail e a senha do acesso à vitrine.':'Suas roupas estão preservadas. Falta apenas conectar a publicação uma vez.')}catch(e){loggedIn=false;try{await load()}catch{}message(e.message,true)}})();
+(async()=>{try{loggedIn=await api.resumeLogin();const state=await load();if(loggedIn)openEditor();message(loggedIn?'Pronto! Você já pode publicar suas roupas.':state.configured?'Entre com sua conta do GitHub após concluir a conexão inicial.':'Suas roupas estão preservadas. Falta apenas conectar a publicação uma vez.')}catch(e){loggedIn=false;try{await load()}catch{}message(e.message,true)}})();
 
 
 tickEmailWait();
+
+window.addEventListener('pageshow',e=>{if(e.persisted)lock(false)});

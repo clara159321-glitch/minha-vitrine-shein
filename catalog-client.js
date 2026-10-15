@@ -40,6 +40,13 @@ async function sendCode(email){
 }
 
 async function login(email,code){const data=await request('/auth/v1/verify',{method:'POST',body:{email,token:code,type:'email'}});session={token:data.access_token,expiresAt:Date.now()+data.expires_in*1000};try{const ok=await request('/rest/v1/rpc/is_vitrine_admin',{method:'POST',body:{},auth:true});if(ok!==true)throw Error('Esta conta não tem permissão para administrar a vitrine.')}catch(e){session=null;throw e}}
+async function githubLogin(){
+ const settings=await request('/auth/v1/settings');
+ if(settings?.external?.github!==true)throw Error('Falta ativar a conexão com o GitHub no Supabase. Continue a configuração guiada nesta conversa; não é necessário pedir e-mails.');
+ const c=await config();const target=new URL('/auth/v1/authorize',c.supabaseUrl);
+ target.searchParams.set('provider','github');target.searchParams.set('redirect_to','https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html');target.searchParams.set('scopes','user:email');
+ global.location.assign(target.href);
+}
 async function passwordLogin(email,password){
  session=null;
  const data=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});
@@ -66,6 +73,6 @@ async function uploadPhoto(data){
 }
 async function save(product,version){validate(product);return request('/rest/v1/rpc/save_vitrine_product',{method:'POST',auth:true,body:{product,expected_version:version??null}})}
 async function remove(id,version){return request('/rest/v1/rpc/archive_vitrine_product',{method:'POST',auth:true,body:{product_id:id,expected_version:version}})}
-global.VitrineCatalog={config,catalog,emailWaitState,sendCode,login,passwordLogin,resumeLogin,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
+global.VitrineCatalog={config,catalog,emailWaitState,sendCode,login,githubLogin,passwordLogin,resumeLogin,logout,initialize,uploadPhoto,save,remove,validate,safeImage,categories};
 })(typeof window!=='undefined'?window:globalThis);
 
