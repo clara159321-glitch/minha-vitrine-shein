@@ -1,42 +1,39 @@
-# Minha Vitrine
+# Minha Vitrine SHEIN
 
-Vitrine independente de afiliados da SHEIN, em português, feita com HTML, CSS e JavaScript sem dependências de build.
+Site estático responsivo, sem instalação ou compilação. Arquivos públicos na raiz: index.html, admin.html, products.json e assets/. .nojekyll evita processamento Jekyll.
 
-## Recursos
+## Produtos
 
-- Layout responsivo para celular e computador.
-- Busca sem distinção de acentos, filtros por categoria e ordenação alfabética.
-- Favoritos salvos no navegador (localStorage).
-- Aviso de transparência sobre links de afiliada.
-- Estados vazios, navegação por teclado e respeito à preferência de movimento reduzido.
+Macacão feminino preto de um ombro só, SHEIN BAE: ID 73513430, referência R$ 108,68. Foto e link aguardando envio. Sem link não existe botão de compra ativo. O vestido bege anterior foi preservado com a imagem e o link enviados. Nenhuma oferta demonstrativa é exibida.
 
-## Visualizar
+## Editar no celular
 
-Abra index.html no navegador, ou execute na pasta do projeto:
+1. Abra admin.html pelo endereço publicado e toque em Editar ou Novo produto.
+2. Preencha nome, preço de referência, ID SHEIN, categoria, foto e link de afiliada. Pode escolher uma foto JPG, PNG ou WebP de até 2 MB do celular. Campos de foto, preço, ID e link podem ficar vazios.
+3. Toque em Salvar no rascunho. Isso salva somente neste navegador, não no site público.
+4. Toque em Baixar products.json para publicar.
+5. No GitHub, abra Code → main → Add file → Upload files (no celular pode estar em + ou ⋯). Envie o products.json baixado para a raiz, substituindo o anterior; mantenha o nome exato. Toque em Commit changes e confirme na main.
+6. Aguarde o GitHub Pages atualizar. O editor também permite importar um JSON de backup.
 
-```sh
-python3 -m http.server 8000
-```
+O editor não solicita tokens ou senhas. Só quem tem permissão de escrita no GitHub pode publicar. Não há servidor de administração: visitantes podem abrir o formulário, mas só alteram os próprios rascunhos. O arquivo público products.json é a fonte do catálogo de todos. Fotos do celular são incorporadas no JSON; links HTTPS ou caminhos assets/ também são aceitos. Para muitos produtos, prefira hospedar fotos em assets/ para manter o catálogo leve.
 
-Acesse http://localhost:8000. Nenhuma instalação ou compilação é necessária.
+## Ativar GitHub Pages
 
-## Cadastrar produtos reais
+Abra https://github.com/clara159321-glitch/minha-vitrine-shein/settings/pages . Em Build and deployment → Source escolha Deploy from a branch. Em Branch selecione main e /(root), depois Save. Aguarde a implantação e confira o endereço exibido nessa página.
 
-Edite a lista products no final de index.html. Cada item possui id único, name, category, image, alt e affiliateUrl.
+O repositório é privado. Se Pages exigir plano pago, é preciso um plano compatível ou escolher tornar o repositório público: Settings → General → Danger Zone → Change repository visibility → Change to public, e confirmar as instruções do GitHub. Essa escolha expõe o código e o histórico do repositório; não foi feita automaticamente. Depois volte a Settings → Pages e faça a configuração acima. No celular, abra o GitHub no navegador e, se Settings não aparecer na barra de abas, procure no menu ⋯; se necessário ative a versão para computador do navegador.
 
-- Troque os exemplos pelos seus produtos, nomes e fotos reais, com direito de uso.
-- image atualmente é um identificador do Unsplash. Para fotos de produtos, altere a atribuição img.src para usar a URL completa da foto cadastrada em image.
-- Preencha affiliateUrl com seu link HTTPS de afiliada verificado da SHEIN. O botão abre em outra aba com rel="sponsored noopener noreferrer".
-- Não use links comuns se a intenção é atribuir comissão: utilize o link fornecido pelo seu programa de afiliados.
-- Atualize os textos de demonstração no catálogo, no contador de resultados e na seção sobre quando sua seleção real estiver pronta. Os exemplos não têm preços nem ofertas confirmadas.
-- As categorias disponíveis são Todos, Moda, Acessórios, Casa e Beleza; altere a lista de categorias no script caso necessário.
+Endereço esperado após ativação, ainda não confirmado como publicado: https://clara159321-glitch.github.io/minha-vitrine-shein/
+Editor após publicação: https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html
 
-As fotos atuais são ilustrativas do Unsplash e não representam produtos confirmados da SHEIN. Fontes são carregadas do Google Fonts. O site não solicita conta e não recebe pagamentos; favoritos ficam apenas no navegador do visitante.
+## Prévia local
 
-## Hospedagem
+Execute python3 -m http.server 8000 nesta pasta e abra http://localhost:8000 . Não abra index.html diretamente via file://, pois o catálogo é carregado com fetch.
 
-O arquivo index.html pode ser publicado em qualquer hospedagem estática. Este repositório foi criado como privado; nenhuma hospedagem pública foi configurada. GitHub Pages em repositórios privados depende do plano da conta. Não torne o repositório público apenas para habilitar a hospedagem sem avaliar essa decisão.
+## Transparência
 
-## Verificação
+Preços são referências fornecidas, não promessas de oferta. Compras abrem o HTTPS de afiliada cadastrado, em outra aba com sponsored noopener noreferrer. Confira preço final e disponibilidade na SHEIN. Fotos e links devem corresponder ao produto; o link do vestido não foi reaproveitado para o macacão. Favoritos e rascunhos ficam no navegador. O site usa fontes do Google Fonts e imagem editorial do Unsplash; imagem editorial não é oferta.
 
-JavaScript verificado com node --check. Validação visual e de navegação em navegador ainda não realizada neste ambiente.
+## Verificação desta versão
+
+Testes de lógica executados com Node: catálogo, formatação BRL, link exato do vestido, bloqueio da compra pendente, busca por ID e sem acentos, favoritos e estado vazio. Sintaxe do editor verificada. A tentativa de teste visual com Chromium foi bloqueada pelo sandbox (operação de socket não permitida). Não houve validação visual em celular nem confirmação de publicação.
