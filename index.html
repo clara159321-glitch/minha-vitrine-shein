@@ -30,6 +30,7 @@
 <footer><div class="footer-top"><a class="brand" href="#">minha vitrine<i>˙</i></a><a href="#achadinhos" style="font-size:12px">Voltar aos achadinhos ↑</a></div><p><strong>Transparência:</strong> esta é uma vitrine independente, sem vínculo oficial com a SHEIN. Esta página contém links de afiliada e podemos receber uma comissão pelas compras realizadas por eles. Preços, disponibilidade, entrega e condições devem ser conferidos diretamente na loja.</p><div class="footer-bottom"><span>© <span id="year"></span> Minha Vitrine</span><a href="admin.html">Gerenciar produtos</a></div></footer>
 </div>
 
+<script src="catalog-client.js"></script>
 <script>
 /* Catálogo compartilhado em products.json; editor de rascunhos em admin.html. */
 let products = [];
@@ -49,8 +50,8 @@ function render(){
  list.forEach(p=>{
  const card=document.createElement('article');card.className='card';
  const picture=document.createElement('div');picture.className='card-image';
- const img=document.createElement('img');if(p.imageUrl)img.src=p.imageUrl;else{img.hidden=true;const placeholder=document.createElement('span');placeholder.textContent='Foto em breve';placeholder.style.cssText='position:absolute;inset:40% 10%;text-align:center;color:#73746a';picture.append(placeholder)}img.alt=p.alt;img.loading='lazy';img.width=600;img.height=800;if(p.imageUrl)img.style.objectFit='contain'
- img.onerror=()=>{img.style.display='none';picture.style.background='linear-gradient(135deg,#ded9ce,#eeebe3)'};
+ const img=document.createElement('img');if(p.imageUrl&&window.VitrineCatalog.safeImage(p.imageUrl))img.src=p.imageUrl;else{img.hidden=true;const placeholder=document.createElement('span');placeholder.textContent='Foto em breve';placeholder.style.cssText='position:absolute;inset:40% 10%;text-align:center;color:#73746a';picture.append(placeholder)}img.alt=p.alt||p.name;img.loading='lazy';img.width=600;img.height=800;if(p.imageUrl)img.style.objectFit='contain'
+ img.onerror=()=>{img.hidden=true;const warning=document.createElement('span');warning.textContent='Foto indisponível';warning.style.cssText='position:absolute;inset:40% 10%;text-align:center;color:#73746a';picture.append(warning)};
  const heart=document.createElement('button');heart.className='heart';const active=saved.includes(p.id);heart.textContent=active?'♥':'♡';heart.setAttribute('aria-label',(active?'Remover dos':'Adicionar aos')+' favoritos: '+p.name);heart.setAttribute('aria-pressed',String(active));
  heart.onclick=()=>{saved=active?saved.filter(id=>id!==p.id):[...saved,p.id];try{localStorage.setItem('vitrine-favorites',JSON.stringify(saved))}catch{}render();const replacement=[...grid.querySelectorAll('.heart')].find(b=>b.getAttribute('aria-label').endsWith(p.name));if(replacement)replacement.focus();else document.querySelector('#favorites').focus()};
  const tag=document.createElement('span');tag.className='tag';tag.textContent=p.affiliateUrl?'SELEÇÃO DA VITRINE':'EM BREVE';
@@ -70,6 +71,16 @@ document.querySelector('#search').addEventListener('input',render);
 document.querySelector('#sort').addEventListener('change',render);
 document.querySelector('#favorites').onclick=()=>{onlyFavorites=!onlyFavorites;category='Todos';document.querySelector('#search').value='';render();document.querySelector('#achadinhos').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})};
 document.querySelector('#year').textContent=new Date().getFullYear();
-fetch('products.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Catálogo indisponível');return r.json()}).then(data=>{if(!Array.isArray(data))throw Error('Catálogo inválido');products=data;saved=saved.filter(id=>products.some(p=>p.id===id));render()}).catch(()=>{document.querySelector('#result-count').textContent='Não foi possível carregar os produtos. Tente atualizar a página.'});
+let catalogLoading=false;
+async function refreshCatalog(){
+ if(catalogLoading)return;catalogLoading=true;
+ try{const state=await window.VitrineCatalog.catalog();products=state.products;saved=saved.filter(id=>products.some(p=>p.id===id));render()}
+ catch{document.querySelector('#result-count').textContent='Não foi possível atualizar a vitrine. Confira a conexão e tente novamente.'}
+ finally{catalogLoading=false}
+}
+refreshCatalog();
+window.addEventListener('pageshow',e=>{if(e.persisted)refreshCatalog()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCatalog()});
+
 </script>
 </body></html>

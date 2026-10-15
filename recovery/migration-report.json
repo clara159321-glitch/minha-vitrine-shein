@@ -1,0 +1,41 @@
+{
+  "sourceCommit": "523789ce832b4908040ede0557b3b83d8b02b92b",
+  "officialCatalog": "products.json",
+  "sources": [
+    {
+      "path": "products.json",
+      "sha": "d8449f4078a13e324c6bfb93d2baf3622de66119",
+      "count": 2
+    },
+    {
+      "path": "products .json",
+      "sha": "7b00dc7674178b0ecaf6d8a1bccacafee3dc462c",
+      "count": 4
+    },
+    {
+      "path": "products (2).json",
+      "sha": "d8449f4078a13e324c6bfb93d2baf3622de66119",
+      "count": 2
+    },
+    {
+      "path": "products (3).json",
+      "sha": "a47fa9114e06217afcc6f9ed035a0a42b9f13b4a",
+      "count": 3
+    }
+  ],
+  "decision": "Three unique products. Exact duplicate set in products .json (same name, price, photo, link) consolidated using id from products (3).json. No source deleted; backups preserved.",
+  "products": [
+    {
+      "id": "shein-73513430",
+      "name": "Macacão feminino preto de um ombro só, SHEIN BAE"
+    },
+    {
+      "id": "vestido-ombro-unico",
+      "name": "Vestido midi de um ombro só — bege"
+    },
+    {
+      "id": "produto-a2234e27-8ef2-4231-af21-93c2d5e59b03",
+      "name": "Conjunto de 2 Peças Top Bandeau de Malha Cor Sólida e Saia Longa"
+    }
+  ]
+}
