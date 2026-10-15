@@ -30,11 +30,16 @@ async function request(path,{method='GET',body,rawBody,auth=false,headers={}}={}
 }
 async function localCatalog(){const r=await timedFetch('products.json',{cache:'no-store'});if(!r.ok)throw Error('Não foi possível carregar a vitrine.');const data=await r.json();if(!Array.isArray(data))throw Error('Catálogo inválido.');return data.map(validate)}
 async function catalog(){const c=await config();if(!c.supabaseUrl)return {initialized:false,products:await localCatalog(),configured:false};const state=await request('/rest/v1/rpc/get_vitrine_catalog',{method:'POST',body:{}});if(!state||typeof state.initialized!=='boolean'||!Array.isArray(state.products))throw Error('O serviço de publicação precisa de uma verificação.');return {...state,configured:true,products:state.initialized?state.products.map(validate):await localCatalog()}}
+function authRedirect(){
+ const redirect=new URL('admin.html',global.location.href);
+ if(redirect.protocol!=='https:')throw Error('Abra o painel pelo endereço HTTPS publicado para entrar.');
+ redirect.search='';redirect.hash='';return redirect.href;
+}
 async function sendCode(email){
  const waiting=emailWaitState();if(waiting)throw waitError(waiting);
  if(emailSending)throw Error('Seu pedido já está sendo enviado. Aguarde.');
  emailSending=true;
- try{const redirect='https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html';const result=await request('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,create_user:true}});rememberWait(60,'sent',true);return result}
+ try{const redirect=authRedirect();const result=await request('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,create_user:true}});rememberWait(60,'sent',true);return result}
  catch(e){if(e.waitSeconds)throw waitError(rememberWait(e.waitSeconds,e.waitKind,e.estimated));if(e.message.startsWith('Sem conexão.'))rememberWait(60,'network',true);throw e}
  finally{emailSending=false}
 }
@@ -44,7 +49,7 @@ async function githubLogin(){
  const settings=await request('/auth/v1/settings');
  if(settings?.external?.github!==true)throw Error('Falta ativar a conexão com o GitHub no Supabase. Continue a configuração guiada nesta conversa; não é necessário pedir e-mails.');
  const c=await config();const target=new URL('/auth/v1/authorize',c.supabaseUrl);
- target.searchParams.set('provider','github');target.searchParams.set('redirect_to','https://clara159321-glitch.github.io/minha-vitrine-shein/admin.html');target.searchParams.set('scopes','user:email');
+ target.searchParams.set('provider','github');target.searchParams.set('redirect_to',authRedirect());target.searchParams.set('scopes','user:email');
  global.location.assign(target.href);
 }
 async function passwordLogin(email,password){
